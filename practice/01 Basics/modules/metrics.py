@@ -1,4 +1,5 @@
 import numpy as np
+import math
 
 
 def ED_distance(ts1: np.ndarray, ts2: np.ndarray) -> float:
@@ -6,6 +7,21 @@ def ED_distance(ts1: np.ndarray, ts2: np.ndarray) -> float:
     for i in range(len(ts1)):
         ed_dist += (ts1[i] - ts2[i])**2
     return np.sqrt(ed_dist)
+
+def simple_average(ts):
+  sum = 0
+  for val in ts:
+    sum += val
+  return sum/len(ts)
+
+
+def deviation_ts(ts):
+  pow_average = 0
+  sum = 0
+  for val in ts:
+    sum += val*val
+  pow_average = sum/len(ts)
+  return math.sqrt(pow_average - math.pow(simple_average(ts), 2))
 
 
 def norm_ED_distance(ts1: np.ndarray, ts2: np.ndarray) -> float:
@@ -23,8 +39,7 @@ def norm_ED_distance(ts1: np.ndarray, ts2: np.ndarray) -> float:
     """
 
     norm_ed_dist = 0
-
-    # INSERT YOUR CODE
+    norm_ed_dist = math.sqrt(abs(2*len(ts1)*(1-(np.dot(ts1, ts2)-len(ts1)*simple_average(ts1)*simple_average(ts2))/(len(ts1)*deviation_ts(ts1)*deviation_ts(ts2)))))
 
     return norm_ed_dist
 

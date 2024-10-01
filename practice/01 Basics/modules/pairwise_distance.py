@@ -15,8 +15,8 @@ class PairwiseDistance:
     is_normalize: normalize or not time series
     """
 
-    def __init__(self, metric: str = 'euclidean', is_normalize: bool = False) -> None:
-
+    def __init__(self, metric: str = 'euclidean', is_normalize: bool = False, z_norm_flag = False) -> None:
+        self.z_norm_flag = z_norm_flag
         self.metric: str = metric
         self.is_normalize: bool = is_normalize
     
@@ -49,10 +49,14 @@ class PairwiseDistance:
 
         dist_func = None
 
-        if self.metric == 'euclidean':
-            dist_func = ED_distance
-        elif self.metric == 'dtw':
-            dist_func = DTW_distance
+        if self.metric == "euclidean":
+            if self.is_normalize:
+                return norm_ED_distance
+            else:
+                return ED_distance
+            
+        if self.metric == "dtw":
+            return DTW_distance
 
         return dist_func
 
@@ -68,25 +72,45 @@ class PairwiseDistance:
         -------
         matrix_values: distance matrix
         """
+
+        if (self.distance_metric != "normalized euclidean distance" and self.z_norm_flag):
+          for i in range(0, len(input_data)):
+            input_data[i] = z_normalize(input_data[i])
         
         matrix_shape = (input_data.shape[0], input_data.shape[0])
         matrix_values = np.zeros(shape=matrix_shape)
         
-        dist_func = self._choose_distance()
+        for i in range(0, input_data.shape[0]):
+          for j in range(0, input_data.shape[0]):
+            if j < i:
+              matrix_values[i, j] = matrix_values[j, i]
+              continue
+            if i == j:
+              matrix_values[i, j] = 0
+              continue
+            dict_func = self._choose_distance()
+            matrix_values[i, j] = dict_func(input_data[i], input_data[j])
         
-        for i in range(matrix_shape[0]):
-            for j in range(i, matrix_shape[1]):
-                if i == j:
-                    matrix_values[i, j] = 0
-                else:
-                    if self.is_normalize:
-                        ts_a = (input_data[i] - np.mean(input_data[i])) / np.std(input_data[i])
-                        ts_b = (input_data[j] - np.mean(input_data[j])) / np.std(input_data[j])
-                    else:
-                        ts_a = input_data[i]
-                        ts_b = input_data[j]
-                    dist = dist_func(ts_a, ts_b)
-                    matrix_values[i, j] = dist
-                    matrix_values[j, i] = dist
-
+        # matrix_shape = (input_data.shape[0], input_data.shape[0])
+        # matrix_values = np.zeros(shape=matrix_shape)
+        
+        # dist_func = self._choose_distance()
+        
+        # for i in range(matrix_shape[0]):
+        #     for j in range(i, matrix_shape[1]):
+        #         if i == j:
+        #             matrix_values[i, j] = 0
+        #             continue
+        #         if j < i:
+        #             matrix_values[i, j] = matrix_values[j, i]
+        #             continue
+        #         if not (self.metric == "euclidean" and self.is_normalize) and self.z_norm_flag:
+        #             ts_a = z_normalize(input_data[i])
+        #             ts_b = z_normalize(input_data[j])
+        #         else:
+        #             ts_a = input_data[i]
+        #             ts_b = input_data[j]
+        #         dist = dist_func(ts_a, ts_b)
+        #         matrix_values[i, j] = dist
+                    
         return matrix_values
