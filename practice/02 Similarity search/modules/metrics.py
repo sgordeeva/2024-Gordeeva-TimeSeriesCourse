@@ -53,12 +53,13 @@ def DTW_distance(ts1: np.ndarray, ts2: np.ndarray, r: float = 1) -> float:
     dtw_matrix[:, 0] = float('inf')
     dtw_matrix[0, :] = float('inf')
     dtw_matrix[0, 0] = 0
+    r = int(np.floor(r*len(ts1)))
 
     for i in range(1, n + 1):
-      for j in range(1, m + 1):
+      for j in range(max(1, i - r), min(m, i + r) + 1):
         cost = (ts1[i - 1] - ts2[j - 1])*(ts1[i - 1] - ts2[j - 1])
         dtw_matrix[i, j] = cost + min(dtw_matrix[i - 1, j], dtw_matrix[i, j - 1], dtw_matrix[i - 1, j - 1])
 
-    dtw_dist = dtw_matrix[n, m]
+    dtw_dist = dtw_matrix[-1][-1]
 
     return dtw_dist
